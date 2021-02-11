@@ -1,9 +1,9 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     name='icasamanager',
     version='1.0',
-    packages=['icasamanager'],
+    packages=find_packages(),
     url='',
     license='GPLv3',
     author='marius',
