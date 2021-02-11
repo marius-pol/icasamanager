@@ -96,12 +96,10 @@ def start():
 
 def stop():
     kill_process()
+    shutil.rmtree(os.path.join(config.simulator_path, config.chameleon_cache_dir), ignore_errors=True)
 
 
 def is_running():
-    if get_current_time() is None:
-        return False
-
     return get_current_time() is not None
 
 
@@ -161,6 +159,7 @@ def get_shell_command_url(command):
 
 def json_request(url):
     response = request_get(url)
+
     if response:
         return response.json()
     else:
@@ -168,10 +167,24 @@ def json_request(url):
 
 
 def request_get(url):
+    import urllib
+    from urllib import request, error
+
     try:
+        code = request.urlopen(url).getcode()
+        if code != 200:
+            print('code unknown {0}'.format(code))
+
         response = requests.get(url)
         return response
+    except urllib.error.URLError:
+        time.sleep(1)
+        return None
     except requests.exceptions.RequestException:
+        return None
+    except:
+        import sys
+        print("Unknown exception:", sys.exc_info()[0])
         return None
 
 
