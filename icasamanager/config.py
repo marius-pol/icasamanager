@@ -15,7 +15,6 @@ start_simulator_script_path = os.path.join(simulator_path, start_simulator_scrip
 
 port = 9000  # set in icasa_path/conf/application.conf, with line http.port = 9000 (default value)
 process_pid = None
-wait_response = 0.001
 
 clock_url = 'http://localhost:{0}/icasa/clocks/clock/default'.format(port)
 login_url = 'http://localhost:{0}/monitor/login'.format(port)

@@ -1,3 +1,4 @@
+import logging
 import os
 import os.path
 import shutil
@@ -36,7 +37,7 @@ def download():
     response = requests.get(''.join([config.download_path, config.download_file]), allow_redirects=True)
     open(target_file, 'wb').write(response.content)
 
-    print('iCasa downloaded to {0}'.format(target_file))
+    print('iCasa simulator downloaded to {0}'.format(target_file))
 
 
 def unzip():
@@ -49,7 +50,7 @@ def unzip():
         if file.startswith(config.simulator_dir):
             archive.extract(file, config.local_base_dir)
 
-    print('iCasa installed in {0}'.format(config.simulator_path))
+    print('iCasa simulator installed in {0}'.format(config.simulator_path))
 
 
 def make_executable():
@@ -63,6 +64,7 @@ def make_executable():
 
 
 def open_process():
+    logging.debug('felix process open')
     config.process_pid = subprocess.Popen(['/bin/bash', os.path.abspath(config.start_simulator_script_path)],
                                           cwd=config.simulator_path,
                                           stdout=subprocess.DEVNULL, stdin=subprocess.DEVNULL).pid
@@ -86,15 +88,16 @@ def start():
     open_process()
 
     while True:
-        time.sleep(config.wait_response)
+        response = request_get(config.clock_url)
 
-        if is_running():
+        if response:
             break
 
     print('iCasa simulator started')
 
 
 def stop():
+    logging.info('simulator stop')
     kill_process()
     shutil.rmtree(os.path.join(config.simulator_path, config.chameleon_cache_dir), ignore_errors=True)
 
@@ -110,9 +113,9 @@ def start_script(script_name):
     while True:
         if response and response.status_code == 200 and 'Executing script' in str(response.content):
             break
-
-        time.sleep(config.wait_response)
-        response = send_gogo_command(Command.execute_script.value, script_name)
+        else:
+            time.sleep(1)
+            response = send_gogo_command(Command.execute_script.value, script_name)
 
 
 def get_system_state():
@@ -167,20 +170,17 @@ def json_request(url):
 
 
 def request_get(url):
-    import urllib
-    from urllib import request, error
-
     try:
-        code = request.urlopen(url).getcode()
-        if code != 200:
-            print('code unknown {0}'.format(code))
+        response = requests.get(url, timeout=1)
 
-        response = requests.get(url)
-        return response
-    except urllib.error.URLError:
+        if response and response.ok:
+            return response
+        else:
+            return None
+
+    except requests.exceptions.RequestException as error:
+        logging.info('waiting for simulator to start...')
         time.sleep(1)
-        return None
-    except requests.exceptions.RequestException:
         return None
     except:
         import sys
@@ -191,7 +191,12 @@ def request_get(url):
 def request_post(url, parameters):
     try:
         response = requests.post(url, json=parameters)
-        return response
+
+        if response and response.ok:
+            return response
+        else:
+            return None
+
     except requests.exceptions.RequestException:
         return None
 
