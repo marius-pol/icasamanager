@@ -82,9 +82,15 @@ def kill_process():
         config.process_pid = None
 
 
-def start():
-    shutil.rmtree(os.path.join(config.simulator_path, config.chameleon_cache_dir), ignore_errors=True)
+def clean_cache():
+    logging.debug('simulator clean cache')
 
+    if os.path.isdir(os.path.join(config.simulator_path, config.chameleon_cache_dir)):
+        shutil.rmtree(os.path.join(config.simulator_path, config.chameleon_cache_dir))
+
+
+def start():
+    logging.info('simulator start')
     open_process()
 
     while True:
@@ -99,7 +105,7 @@ def start():
 def stop():
     logging.info('simulator stop')
     kill_process()
-    shutil.rmtree(os.path.join(config.simulator_path, config.chameleon_cache_dir), ignore_errors=True)
+    clean_cache()
 
 
 def is_running():
